@@ -13,6 +13,7 @@ from oauth2_provider.models import AccessToken
 from Blog.serializers import CommentSerializer
 
 
+
 @api_view(['DELETE'])
 def logout(request):
     try:
@@ -24,7 +25,6 @@ def logout(request):
         return Response(status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 # /posts/
 # /posts/?q=
@@ -44,14 +44,13 @@ class PostViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
         else:
             return self.serializer_class
 
+
     def get_queryset(self):
         query_set = self.queryset
         if self.action == 'list':
             q = self.request.query_params.get('q')
             if q:
-                query_set = query_set.filter(
-                    Q(title__icontains=q) | Q(description__icontains=q) | Q(starting_point__icontains=q) | Q(
-                        end_point__icontains=q))
+                query_set = query_set.filter(Q(title__icontains=q) | Q(description__icontains=q) | Q(starting_point__icontains=q) | Q(end_point__icontains=q))
         if self.action == 'retrieve':
             query_set = Post.objects.prefetch_related('hashtags', 'user').filter(active=True)
         return query_set
@@ -83,8 +82,7 @@ class PostViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
             )
             return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
         elif request.method.__eq__('GET'):
-            comments = self.get_object().comment_set.order_by('-id').filter(parent_comment__isnull=True).select_related(
-                'user')
+            comments = self.get_object().comment_set.order_by('-id').filter(parent_comment__isnull=True).select_related('user')
             paginator = paginators.CommentPaginator()
             page = paginator.paginate_queryset(comments, request)
             if page is not None:
@@ -95,8 +93,8 @@ class PostViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
 
     @action(methods=['get'], url_path='images', detail=True)
     def images_handle(self, request, pk):
-        images = self.get_object().images.order_by('-id')
-        return Response(serializers.ImageSerializer(images, many=True).data, status=status.HTTP_200_OK)
+            images = self.get_object().images.order_by('-id')
+            return Response(serializers.ImageSerializer(images, many=True).data, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=True, url_path='average_rating')
     def average_rating(self, request, pk=None):
@@ -106,7 +104,6 @@ class PostViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
             return Response({'average_rating': 0}, status=status.HTTP_200_OK)
         average = sum(rating.stars for rating in ratings) / ratings.count()  # Sử dụng 'stars'
         return Response({'average_rating': average}, status=status.HTTP_200_OK)
-
 
 # /hashtags/
 # /hashtags/?q=
@@ -126,14 +123,14 @@ class HashtagViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIV
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
-    parser_classes = [parsers.MultiPartParser, ]
+    parser_classes = [parsers.MultiPartParser,]
 
     def get_permissions(self):
         if self.action.__eq__('current_user'):
             return [permissions.IsAuthenticated()]
         else:
             return [permissions.AllowAny()]
-
+        
     def get_queryset(self):
         query_set = self.queryset
         if self.action.__eq__('retrieve'):
@@ -169,7 +166,7 @@ class CommentViewSet(viewsets.ViewSet, generics.RetrieveUpdateDestroyAPIView):
         if post_id:
             queryset = queryset.filter(post_id=post_id, parent_comment__isnull=True).order_by('-created_date')
         return queryset
-
+    
     def get_permissions(self):
         if self.action.__eq__('list'):
             return [permissions.AllowAny()]
@@ -182,7 +179,7 @@ class CommentViewSet(viewsets.ViewSet, generics.RetrieveUpdateDestroyAPIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response(status=status.HTTP_403_FORBIDDEN)
-
+        
     def update(self, request, *args, **kwargs):
         comment = self.get_object()
         if comment.user == request.user:
@@ -197,8 +194,7 @@ class GroupViewSet(viewsets.ModelViewSet, generics.CreateAPIView, generics.Retri
     queryset = Group.objects.all()
     serializer_class = serializers.GroupSerializer
 
-
-class ReportViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView):
+class ReportViewSet(viewsets.ViewSet,generics.CreateAPIView, generics.ListAPIView):
     queryset = Report.objects.all()
     serializer_class = serializers.ReportSerializer
     permission_classes = [permissions.IsAuthenticated]  # Ensure the user is authenticated
@@ -209,25 +205,21 @@ class ReportViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIVi
         else:
             raise serializers.ValidationError("You must be logged in to report a user.")
 
-
-class FollowViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView):
+class FollowViewSet(viewsets.ViewSet,generics.CreateAPIView, generics.ListAPIView):
     queryset = Follow.objects.all()
     serializer_class = serializers.FollowSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-
-class ImageViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView):
+class ImageViewSet(viewsets.ViewSet,generics.CreateAPIView, generics.ListAPIView):
     queryset = Image.objects.all()
     serializer_class = serializers.ImageSerializer
-
     def perform_create(self, serializer):
         # serializer.save(post=self.request.user.post_set.first())
         postId = self.request.data.get('post')  # Lấy postId từ yêu cầu POST
         post = get_object_or_404(Post, pk=postId)  # Lấy post từ cơ sở dữ liệu
         serializer.save(post=post)  # Gán post cho ảnh
 
-
-class RatingViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView):
+class RatingViewSet(viewsets.ViewSet,generics.CreateAPIView, generics.ListAPIView):
     queryset = Rating.objects.all()
     serializer_class = serializers.RatingSerializer
 
