@@ -1,5 +1,7 @@
 # Share Your Trip Backend
 
+# Team - size: 2 members
+
 ## Overview
 
 **Share Your Trip** is a backend system that provides APIs for clients to handle tasks related to post management, user interaction and tasks related to sharing journeys. This system provides features for objects such as users and administrators to create a complete system.
